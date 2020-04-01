@@ -33,7 +33,7 @@ This is a DIY clone of the [Vidami Pedal](https://utility.design) by Utility Des
 ### Enclosure
  - drill 5 holes for the footswitches
  - drill a hole for the USB cable
- - mount the Arduino Micro so it won't move
+ - mount the Arduino Micro so it won't move (e.g. a [small breadboard](https://www.taydaelectronics.com/catalogsearch/result/?q=170+point+breadboard))
  - mount the footswitches
 
 ## Software Installation
