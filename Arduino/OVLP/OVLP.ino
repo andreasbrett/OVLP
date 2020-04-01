@@ -228,7 +228,8 @@ void loop() {
     // this is a long press
     if ((millis() - timer_PlayPause > longPressTime) && (active_PlayPause_LP == false)) {
       active_PlayPause_LP = true;
-      // do long-press action: nothing
+      // do long-press action: Shift+Alt+Q
+      pressKeys(false, true, true, 'q');
     }
   }
 
