@@ -7,7 +7,7 @@ This is a DIY clone of the [Vidami Pedal](https://utility.design) by Utility Des
 
 ## Parts to get
 - 1x [Arduino Pro Micro](https://www.amazon.de/dp/B01KMFRCN0/)
-- 1x [1590XX Enclosure](https://www.taydaelectronics.com/catalogsearch/result/?q=1590xx)
+- 1x [1590XX](https://www.taydaelectronics.com/catalogsearch/result/?q=1590xx) or [1590DD](https://www.taydaelectronics.com/catalogsearch/result/?q=1590dd) enclosure
 - 5x [Soft momentary footswitches](https://www.taydaelectronics.com/spst-momentary-soft-touch-push-button-stomp-foots-pedal-switch.html)
 - 5x [10kOhm resistors](https://www.taydaelectronics.com/10k-ohm-1-2w-5-carbon-film-resistor.html)
 - 1x [USB cable (USB-A to Micro-USB)](https://www.amazon.de/dp/B019Q6Y2MK/)
