@@ -29,7 +29,7 @@ This is a DIY clone of the [Vidami Pedal](https://utility.design) by Utility Des
       - if you choose custom ones you will have to modify the Arduino code
  - connect the other ends to your footswitches and resistors as shown in the following schematic:
  
- ![Schematic](https://github.com/andreasbrett/OVLP/raw/master/Schematic/schematic.png)
+ ![Schematic](https://github.com/andreasbrett/OVLP/raw/dev/Schematic/schematic.png)
 
 ### Enclosure
  - drill 6 holes for the footswitches
