@@ -14,6 +14,8 @@
 #define button_Back 7
 #define button_PlayPause 8
 #define button_Forward 9
+#define button_Custom 10
+#define button_Bank 11
 
 
 /* ----------------------------------------------------------------------------------------------
@@ -41,6 +43,12 @@ long timer_PlayPause = 0;         // play/pause button long-press timer
 bool active_Forward = false;      // forward button press active?
 bool active_Forward_LP = false;   // forward button long-press active?
 long timer_Forward = 0;           // forward button long-press timer
+
+bool active_Custom = false;       // custom button press active?
+bool active_Custom_LP = false;    // custom button long-press active?
+long timer_Custom = 0;            // custom button long-press timer
+
+bool boolBankTwoSelected = false; // is bank #2 selected?
 
 
 /* ----------------------------------------------------------------------------------------------
@@ -84,6 +92,8 @@ void setup() {
   pinMode(button_Back, INPUT);
   pinMode(button_PlayPause, INPUT);
   pinMode(button_Forward, INPUT);
+  pinMode(button_Custom, INPUT);
+  pinMode(button_Bank, INPUT);
 
   // start USB HID interface
   Keyboard.begin();
@@ -95,6 +105,18 @@ void setup() {
    ----------------------------------------------------------------------------------------------
 */
 void loop() {
+
+
+  /* ----------------------------------------------------------------------------------------------
+     TOGGLE SWITCH: BANK
+     ----------------------------------------------------------------------------------------------
+  */
+  if (digitalRead(button_Bank) == LOW) {
+    boolBankTwoSelected = false;
+  } else {
+    boolBankTwoSelected = true;
+  }
+
 
   /* ----------------------------------------------------------------------------------------------
      BUTTON: SPEED
@@ -113,7 +135,12 @@ void loop() {
     // this is a long press
     if ((millis() - timer_Speed > longPressTime) && (active_Speed_LP == false)) {
       active_Speed_LP = true;
-      // do long-press action: nothing
+      // do long-press action: nothing / Alt+E
+      if (boolBankTwoSelected == false) {
+        // nothing
+      } else {
+        pressKeys(false, false, true, 'e');
+      }
     }
   }
 
@@ -123,8 +150,12 @@ void loop() {
 
     // this was a short press
     if (active_Speed_LP == false) {
-      // do short-press action: Shift+Alt+E
-      pressKeys(false, true, true, 'e');
+      // do short-press action: Shift+Alt+E / Ctrl+E
+      if (boolBankTwoSelected == false) {
+        pressKeys(false, true, true, 'e');
+      } else {
+        pressKeys(true, false, false, 'e');
+      }
     }
 
     // this was a long press
@@ -151,7 +182,12 @@ void loop() {
     // this is a long press
     if ((millis() - timer_Loop > longPressTime) && (active_Loop_LP == false)) {
       active_Loop_LP = true;
-      // do long-press action: nothing
+      // do long-press action: nothing / Alt+W
+      if (boolBankTwoSelected == false) {
+        // nothing
+      } else {
+        pressKeys(false, false, true, 'w');
+      }
     }
   }
 
@@ -161,8 +197,12 @@ void loop() {
 
     // this was a short press
     if (active_Loop_LP == false) {
-      // do short-press action: Shift+Alt+W
-      pressKeys(false, true, true, 'w');
+      // do short-press action: Shift+Alt+W / Ctrl+W
+      if (boolBankTwoSelected == false) {
+        pressKeys(false, true, true, 'w');
+      } else {
+        pressKeys(true, false, false, 'w');
+      }
     }
 
     // this was a long press
@@ -189,8 +229,12 @@ void loop() {
     // this is a long press
     if ((millis() - timer_Back > longPressTime) && (active_Back_LP == false)) {
       active_Back_LP = true;
-      // do long-press action: Shift+Alt+R
-      pressKeys(false, true, true, 'r');
+      // do long-press action: Shift+Alt+R / Alt+A
+      if (boolBankTwoSelected == false) {
+        pressKeys(false, true, true, 'r');
+      } else {
+        pressKeys(false, false, true, 'r');
+      }
     }
   }
 
@@ -200,8 +244,12 @@ void loop() {
 
     // this was a short press
     if (active_Back_LP == false) {
-      // do short-press action: Shift+Alt+A
-      pressKeys(false, true, true, 'a');
+      // do short-press action: Shift+Alt+A / Ctrl+A
+      if (boolBankTwoSelected == false) {
+        pressKeys(false, true, true, 'a');
+      } else {
+        pressKeys(true, false, false, 'a');
+      }
     }
 
     // this was a long press
@@ -228,8 +276,12 @@ void loop() {
     // this is a long press
     if ((millis() - timer_PlayPause > longPressTime) && (active_PlayPause_LP == false)) {
       active_PlayPause_LP = true;
-      // do long-press action: Shift+Alt+Q
-      pressKeys(false, true, true, 'q');
+      // do long-press action: Shift+Alt+Q / Alt+S
+      if (boolBankTwoSelected == false) {
+        pressKeys(false, true, true, 'q');
+      } else {
+        pressKeys(false, false, true, 's');
+      }
     }
   }
 
@@ -239,8 +291,12 @@ void loop() {
 
     // this was a short press
     if (active_PlayPause_LP == false) {
-      // do short-press action: Shift+Alt+S
-      pressKeys(false, true, true, 's');
+      // do short-press action: Shift+Alt+S / Ctrl+S
+      if (boolBankTwoSelected == false) {
+        pressKeys(false, true, true, 's');
+      } else {
+        pressKeys(true, false, false, 's');
+      }
     }
 
     // this was a long press
@@ -267,7 +323,12 @@ void loop() {
     // this is a long press
     if ((millis() - timer_Forward > longPressTime) && (active_Forward_LP == false)) {
       active_Forward_LP = true;
-      // do long-press action: nothing
+      // do long-press action: nothing / Alt+D
+      if (boolBankTwoSelected == false) {
+        // nothing
+      } else {
+        pressKeys(false, false, true, 'd');
+      }
     }
   }
 
@@ -277,8 +338,12 @@ void loop() {
 
     // this was a short press
     if (active_Forward_LP == false) {
-      // do short-press action: Shift+Alt+D
-      pressKeys(false, true, true, 'd');
+      // do short-press action: Shift+Alt+D / Ctrl+D
+      if (boolBankTwoSelected == false) {
+        pressKeys(false, true, true, 'd');
+      } else {
+        pressKeys(true, false, false, 'd');
+      }
     }
 
     // this was a long press
@@ -287,5 +352,51 @@ void loop() {
     }
   }
 
+
+  /* ----------------------------------------------------------------------------------------------
+     BUTTON: CUSTOM
+     ----------------------------------------------------------------------------------------------
+  */
+
+  // button pressed
+  if (digitalRead(button_Custom) == HIGH) {
+
+    // has not been pressed before => start timer
+    if (active_Custom == false) {
+      active_Custom = true;
+      timer_Custom = millis();
+    }
+
+    // this is a long press
+    if ((millis() - timer_Custom > longPressTime) && (active_Custom_LP == false)) {
+      active_Custom_LP = true;
+      // do long-press action: nothing / Alt+F
+      if (boolBankTwoSelected == false) {
+        // nothing
+      } else {
+        pressKeys(false, false, true, 'f');
+      }
+    }
+  }
+
+  // button not pressed anymore
+  else if (active_Custom == true) {
+    active_Custom = false;
+
+    // this was a short press
+    if (active_Custom_LP == false) {
+      // do short-press action: nothing / Ctrl+F
+      if (boolBankTwoSelected == false) {
+        // nothing
+      } else {
+        pressKeys(true, false, false, 'f');
+      }
+    }
+
+    // this was a long press
+    else {
+      active_Custom_LP = false;
+    }
+  }
 
 }
