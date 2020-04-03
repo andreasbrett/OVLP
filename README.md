@@ -48,15 +48,15 @@ This is a DIY clone of the [Vidami Pedal](https://utility.design) by Utility Des
 Use the toggle switch to switch between bank 1 and 2 enabling different keystrokes that the pedal will send via USB to your computer.
 
  - bank 1 is for Youtube / Vimeo
-   - button **Speed** will toggle between playback rates (100% -> 75% -> 50% -> 35% -> 20% and back again to 100%)
-   - button **Loop**
+   - footswitch **Speed** will toggle between playback rates (100% -> 75% -> 50% -> 35% -> 20% and back again to 100%)
+   - footswitch **Loop**
       - 1st time: sets start of the loop
       - 2nd time: sets end of the loop
       - 3rd time: clears loop
-   - buttons **Play / Pause**, **Back** and **Forward** are obviously playback controls
-   - button **Custom** will do nothing
-   - pressing **Play / Pause** button for more than 1sec will reset the playback rate and clear the loop
-   - pressing **Back** button for more than 1sec will rewind the video
+   - footswitches **Play / Pause**, **Back** and **Forward** are obviously playback controls
+   - footswitch **Custom** will do nothing
+   - pressing **Play / Pause** footswitch for more than 1sec will reset the playback rate and clear the loop
+   - pressing **Back** footswitch for more than 1sec will rewind the video
 
  - bank 2 is for any other application like your DAW
    - it will simply send keystrokes that can be assigned in your DAW
@@ -66,4 +66,6 @@ Use the toggle switch to switch between bank 1 and 2 enabling different keystrok
    - **Play / Pause** sends Ctrl+S (Alt+S for long press)
    - **Forward** sends Ctrl+D (Alt+D for long press)
    - **Custom** sends Ctrl+F (Alt+F for long press)
-   - if you want to change them, modify the [Arduino code](Arduino/OVLP/OVLP.ino) and upload it to the Arduino Micro
+   - if you want to change them...
+     - modify the [Arduino code](Arduino/OVLP/OVLP.ino) and upload it to the Arduino Micro
+     - instructions where to modify the code are right at the top of that file
