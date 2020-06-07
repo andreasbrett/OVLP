@@ -32,14 +32,6 @@ unsigned long shortPressTime = 30;    // how long will a switch need to be press
 unsigned long longPressTime = 450;    // how long will a switch need to be pressed to be considered a long press? [in milliseconds]
 bool logMessages = false;             // show log messages via serial connection?
 
-// button objects
-Button btnPlayPause;
-Button btnLoop;
-Button btnBack;
-Button btnCustom;
-Button btnForward;
-Button btnSpeed;
-
 
 /* ----------------------------------------------------------------------------------------------
  * log message via serial connection (for debugging)
@@ -259,6 +251,15 @@ class Button {
       }
     }
 };
+
+
+// button objects
+Button btnPlayPause;
+Button btnLoop;
+Button btnBack;
+Button btnCustom;
+Button btnForward;
+Button btnSpeed;
 
 
 /* ----------------------------------------------------------------------------------------------
