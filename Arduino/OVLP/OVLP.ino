@@ -1,291 +1,334 @@
+/* --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ * OVLP: Online Video Looper Pedal
+ * --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ * AUTHOR  Andreas Brett
+ * URL    https://github.com/andreasbrett/OVLP
+ * --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ *  - for tweaking
+ *      - the pins that you used on your Arduino Micro
+ *      - the keyboard shortcuts the pedal will send via USB
+ *      - go to section "define buttons (pins and shortcuts)"
+ *  - for tweaking the timings for a short vs long press go to section "global variables"
+ *  - please consider not modifying the rest of this script unless you know what you're doing
+ * --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ */
+
+
+
+
 /* ----------------------------------------------------------------------------------------------
-   include keyboard library
-   ----------------------------------------------------------------------------------------------
-*/
+ * include keyboard library
+ * ----------------------------------------------------------------------------------------------
+ */
 #include "Keyboard.h"
 
 
-/* ----------------------------------------------------------------------------------------------
-   define pin <-> button mappings
-   ----------------------------------------------------------------------------------------------
-*/
-#define button_Speed 5
-#define button_Loop 6
-#define button_Back 7
-#define button_PlayPause 8
-#define button_Forward 9
-
 
 /* ----------------------------------------------------------------------------------------------
-   global variables
-   ----------------------------------------------------------------------------------------------
-*/
-long longPressTime = 1250;        // how long is a long press in msec?
-
-bool active_Speed = false;        // speed button press active?
-bool active_Speed_LP = false;     // speed button long-press active?
-long timer_Speed = 0;             // speed button long-press timer
-
-bool active_Loop = false;         // loop button press active?
-bool active_Loop_LP = false;      // loop button long-press active?
-long timer_Loop = 0;              // loop button long-press timer
-
-bool active_Back = false;         // back button press active?
-bool active_Back_LP = false;      // back button long-press active?
-long timer_Back = 0;              // back button long-press timer
-
-bool active_PlayPause = false;    // play/pause button press active?
-bool active_PlayPause_LP = false; // play/pause button long-press active?
-long timer_PlayPause = 0;         // play/pause button long-press timer
-
-bool active_Forward = false;      // forward button press active?
-bool active_Forward_LP = false;   // forward button long-press active?
-long timer_Forward = 0;           // forward button long-press timer
+ * global variables
+ * ----------------------------------------------------------------------------------------------
+ */
+unsigned long shortPressTime = 30;    // how long will a switch need to be pressed to be considered a short press? [in milliseconds]
+unsigned long longPressTime = 450;    // how long will a switch need to be pressed to be considered a long press? [in milliseconds]
+bool logMessages = false;             // show log messages via serial connection?
 
 
 /* ----------------------------------------------------------------------------------------------
-   press and release a combination of keys via USB HID
-   ----------------------------------------------------------------------------------------------
-*/
-void pressKeys(bool ctrl, bool shift, bool alt, char c) {
-  // press ctrl if necessary
-  if (ctrl) {
-    Keyboard.press(KEY_LEFT_CTRL);
+ * log message via serial connection (for debugging)
+ * ----------------------------------------------------------------------------------------------
+ */
+void logMessage(String s, bool bEOL = true) {
+  if (logMessages == true) {
+    Serial.print(s);
+    if (bEOL == true) {
+      Serial.println("");
+    }
   }
-
-  // press shift if necessary
-  if (shift) {
-    Keyboard.press(KEY_LEFT_SHIFT);
-  }
-
-  // press alt if necessary
-  if (alt) {
-    Keyboard.press(KEY_LEFT_ALT);
-  }
-
-  // press character and release after 100ms
-  Keyboard.press(c);
-  delay(100);
-  Keyboard.release(c);
-
-  // release all other keys
-  Keyboard.releaseAll();
 }
 
 
 /* ----------------------------------------------------------------------------------------------
-   setup
-   ----------------------------------------------------------------------------------------------
-*/
+ * CLASS: KbdShortcut
+ * ----------------------------------------------------------------------------------------------
+ */
+class KbdShortcut {
+  private:
+    String shortcut = "<undef>";  // initial shortcut
+    bool ctrlKey = false;         // press Ctrl key?
+    bool shiftKey = false;        // press Shift key?
+    bool altKey = false;          // press Alt key?
+    char character = ' ';         // character to press
+  
+    int delay1 = 5;               // delay before pressing character
+    int delay2 = 80;              // delay before releasing character
+    int delay3 = 40;              // delay before releasing modifiers
+    int delay4 = 100;             // delay after sending a shortcut
+
+  
+  public:
+    /* ----------------------------------------------------------------------------------------------
+     * constructor
+     * ----------------------------------------------------------------------------------------------
+     */
+    void init(String IN_shortcut) {
+      shortcut = IN_shortcut;
+      
+      String s = "";
+      int pos1 = 0;
+      int pos2 = -1;
+  
+      // go through each key in shortcut (delimiter: "#")
+      do {
+        pos2 = shortcut.indexOf("#", pos1);
+        if (pos2 == -1) {
+          pos2 = shortcut.length();
+        }
+        s = shortcut.substring(pos1, pos2);
+        s.toLowerCase();
+        if (s == "ctrl") {
+          ctrlKey = true;
+        } else if (s == "shift") {
+          shiftKey = true;
+        } else if (s == "alt") {
+          altKey = true;
+        } else {
+          character = s.charAt(0);
+        }
+        pos1 = pos2+1;
+      } while(pos1 <= shortcut.length());
+  
+      // remove delay1 and delay3 if no modifiers are set
+      if (ctrlKey == false && shiftKey == false && altKey == false) {
+        delay1 = 0;
+        delay3 = 0;
+      }
+    }
+
+    /* ----------------------------------------------------------------------------------------------
+     * return string representation of keyboard shortcut
+     * ----------------------------------------------------------------------------------------------
+     */
+    String getShortcut() {
+      return shortcut;
+    }
+
+  
+    /* ----------------------------------------------------------------------------------------------
+     * send keyboard shortcut
+     * ----------------------------------------------------------------------------------------------
+     */
+    void send() {
+      // check if character is set
+      if (character != ' ') {
+        // press Ctrl if necessary
+        if (ctrlKey) {
+          Keyboard.press(KEY_LEFT_CTRL);
+        }
+  
+        // press Shift if necessary
+        if (shiftKey) {
+          Keyboard.press(KEY_LEFT_SHIFT);
+        }
+  
+        // press Alt if necessary
+        if (altKey) {
+          Keyboard.press(KEY_LEFT_ALT);
+        }
+  
+        // press character
+        delay(delay1);
+        Keyboard.press(character);
+  
+        // release character
+        delay(delay2);
+        Keyboard.release(character);
+  
+        // release modifiers
+        delay(delay3);
+        Keyboard.releaseAll();
+        delay(delay4);
+      }
+    }
+};
+
+
+/* ----------------------------------------------------------------------------------------------
+ * CLASS: Button
+ * ----------------------------------------------------------------------------------------------
+ */
+class Button {
+  private:
+    int pin_button;                 // button's assigned pin
+    int pin_bank;                   // bank switch' assigned pin
+    int currentState = 0;           // button's current state
+    int previousState = 0;          // button's previous state
+    int startPressed = 0;           // point of time button has been pressed
+    int endPressed = 0;             // point of time button has been released
+    unsigned long holdTime = 0;     // time button has been pressed for
+    KbdShortcut shortcut1_short;    // keyboard shortcut for short press (bank #1)
+    KbdShortcut shortcut1_long;     // keyboard shortcut for long press (bank #1)
+    KbdShortcut shortcut2_short;    // keyboard shortcut for short press (bank #2)
+    KbdShortcut shortcut2_long;     // keyboard shortcut for long press (bank #2)
+
+  public:
+
+    /* ----------------------------------------------------------------------------------------------
+     * constructor
+     * ----------------------------------------------------------------------------------------------
+     */
+    void init(int IN_pin_button, int IN_pin_bank, String IN_short1, String IN_long1, String IN_short2, String IN_long2) {
+      // set pin mode
+      pinMode(IN_pin_button, INPUT);
+	  pinMode(IN_pin_bank, INPUT);
+
+      // define shortcuts
+      shortcut1_short.init(IN_short1);
+      shortcut1_long.init(IN_long1);
+      shortcut2_short.init(IN_short2);
+      shortcut2_long.init(IN_long2);
+      
+      // store pins
+      pin_button = IN_pin_button;
+      pin_bank = IN_pin_bank;
+
+      logMessage("Initialized button on pin ", false);
+      logMessage(String(pin_button));
+    }
+  
+    
+    /* ----------------------------------------------------------------------------------------------
+     * check if button changed state
+     * ----------------------------------------------------------------------------------------------
+     */
+    void check() {
+      currentState = digitalRead(pin_button);
+      if (currentState != previousState) {
+        react();
+      }
+      previousState = currentState;
+    }
+  
+    
+    /* ----------------------------------------------------------------------------------------------
+     * react upon short/long press
+     * ----------------------------------------------------------------------------------------------
+     */
+    void react() {
+      // button pressed
+      if (currentState == HIGH) {
+          startPressed = millis();
+    
+      // button released
+      } else {
+          endPressed = millis();
+          holdTime = endPressed - startPressed;
+    
+          // short-press
+          if (holdTime >= shortPressTime && holdTime < longPressTime) {
+              if (digitalRead(pin_bank) == LOW) {
+                logMessage("Button short-pressed (Bank #1). Sending keystrokes: ", false);
+                logMessage(shortcut1_short.getShortcut());
+                shortcut1_short.send();
+              } else {
+                logMessage("Button short-pressed (Bank #2). Sending keystrokes: ", false);
+                logMessage(shortcut2_short.getShortcut());  
+                shortcut2_short.send();
+              }
+          }
+
+          // long-press
+          if (holdTime >= longPressTime) {
+              if (digitalRead(pin_bank) == LOW) {
+                logMessage("Button long-pressed (Bank #1). Sending keystrokes: ", false);
+                logMessage(shortcut1_long.getShortcut());
+                shortcut1_long.send();
+              } else {
+                logMessage("Button long-pressed (Bank #2). Sending keystrokes: ", false);
+                logMessage(shortcut2_long.getShortcut());
+                shortcut2_long.send();
+              }
+          }
+      }
+    }
+};
+
+
+// button objects
+Button btnPlayPause;
+Button btnLoop;
+Button btnBack;
+Button btnCustom;
+Button btnForward;
+Button btnSpeed;
+
+
+/* ----------------------------------------------------------------------------------------------
+ * setup
+ * ----------------------------------------------------------------------------------------------
+ */
 void setup() {
-  // setup pins as inputs
-  pinMode(button_Speed, INPUT);
-  pinMode(button_Loop, INPUT);
-  pinMode(button_Back, INPUT);
-  pinMode(button_PlayPause, INPUT);
-  pinMode(button_Forward, INPUT);
+  // initialize serial communication (wait for serial stream to open)
+  if (logMessages == true) {
+    Serial.begin(9600);
+    while (!Serial) ;
+    logMessage("---------------------------------------------");
+    logMessage("Serial interface initialized.");
+  }
 
   // start USB HID interface
+  logMessage("Initializing USB HID interface...");
   Keyboard.begin();
+  
+  /* ----------------------------------------------------------------------------------------------
+   * define buttons (pins and shortcuts)
+   * ----------------------------------------------------------------------------------------------
+   * PARAM 1) Arduino pin that is mapped to the button
+   * PARAM 2) Arduino pin that is mapped to the bank switch
+   * PARAM 3) bank #1: shortcut to send when short-pressed
+   * PARAM 4) bank #1: shortcut to send when long-pressed
+   * PARAM 5) bank #2: shortcut to send when short-pressed
+   * PARAM 6) bank #2: shortcut to send when long-pressed
+   * 
+   * ----------------------------------------------------------------------------------------------
+   * shortcut format => concatenate MODIFIER KEYS (ctrl, shift, alt) and NORMAL KEY using "#"
+   * ----------------------------------------------------------------------------------------------
+   *
+   * examples:
+   *  - "Shift#Alt#E"
+   *  - "Ctrl#K"
+   *  - "Alt#X"
+   *
+   * for SPECIAL KEYS (e.g. page up/down, up/down/left/right, escape, enter, and so on) check:
+   * https://www.arduino.cc/reference/en/language/functions/usb/keyboard/keyboardmodifiers/
+   *
+   * examples:
+   *  - "Shift#Alt#" + KEY_F4
+   *  - "Shift#Alt#" + KEY_TAB
+   *  - "Shift#Alt#" + KEY_DOWN_ARROW
+   */
+  logMessage("Initializing buttons...");
+  btnPlayPause.init(8, 16, "Shift#Alt#S", "Shift#Alt#Q", "Ctrl#S", "Alt#S");
+  btnLoop.init(6, 16, "Shift#Alt#W", "Shift#Alt#T", "Ctrl#W", "Alt#W");
+  btnBack.init(7, 16, "Shift#Alt#A", "Shift#Alt#R", "Ctrl#A", "Alt#A");
+  btnCustom.init(10, 16, "Shift#Alt#F", "Shift#Alt#Z", "Ctrl#F", "Alt#F");
+  btnForward.init(9, 16, "Shift#Alt#D", "Shift#Alt#H", "Ctrl#D", "Alt#D");
+  btnSpeed.init(5, 16, "Shift#Alt#E", "Shift#Alt#G", "Ctrl#E", "Alt#E");
+
+  logMessage("Initialization done. Running loop now.");
+  logMessage("---------------------------------------------");
 }
 
 
 /* ----------------------------------------------------------------------------------------------
-   loop
-   ----------------------------------------------------------------------------------------------
-*/
+ * loop
+ * ----------------------------------------------------------------------------------------------
+ */
 void loop() {
-
-  /* ----------------------------------------------------------------------------------------------
-     BUTTON: SPEED
-     ----------------------------------------------------------------------------------------------
-  */
-
-  // button pressed
-  if (digitalRead(button_Speed) == HIGH) {
-
-    // has not been pressed before => start timer
-    if (active_Speed == false) {
-      active_Speed = true;
-      timer_Speed = millis();
-    }
-
-    // this is a long press
-    if ((millis() - timer_Speed > longPressTime) && (active_Speed_LP == false)) {
-      active_Speed_LP = true;
-      // do long-press action: nothing
-    }
-  }
-
-  // button not pressed anymore
-  else if (active_Speed == true) {
-    active_Speed = false;
-
-    // this was a short press
-    if (active_Speed_LP == false) {
-      // do short-press action: Shift+Alt+E
-      pressKeys(false, true, true, 'e');
-    }
-
-    // this was a long press
-    else {
-      active_Speed_LP = false;
-    }
-  }
-
-
-  /* ----------------------------------------------------------------------------------------------
-     BUTTON: LOOP
-     ----------------------------------------------------------------------------------------------
-  */
-
-  // button pressed
-  if (digitalRead(button_Loop) == HIGH) {
-
-    // has not been pressed before => start timer
-    if (active_Loop == false) {
-      active_Loop = true;
-      timer_Loop = millis();
-    }
-
-    // this is a long press
-    if ((millis() - timer_Loop > longPressTime) && (active_Loop_LP == false)) {
-      active_Loop_LP = true;
-      // do long-press action: nothing
-    }
-  }
-
-  // button not pressed anymore
-  else if (active_Loop == true) {
-    active_Loop = false;
-
-    // this was a short press
-    if (active_Loop_LP == false) {
-      // do short-press action: Shift+Alt+W
-      pressKeys(false, true, true, 'w');
-    }
-
-    // this was a long press
-    else {
-      active_Loop_LP = false;
-    }
-  }
-
-
-  /* ----------------------------------------------------------------------------------------------
-     BUTTON: BACK
-     ----------------------------------------------------------------------------------------------
-  */
-
-  // button pressed
-  if (digitalRead(button_Back) == HIGH) {
-
-    // has not been pressed before => start timer
-    if (active_Back == false) {
-      active_Back = true;
-      timer_Back = millis();
-    }
-
-    // this is a long press
-    if ((millis() - timer_Back > longPressTime) && (active_Back_LP == false)) {
-      active_Back_LP = true;
-      // do long-press action: Shift+Alt+R
-      pressKeys(false, true, true, 'r');
-    }
-  }
-
-  // button not pressed anymore
-  else if (active_Back == true) {
-    active_Back = false;
-
-    // this was a short press
-    if (active_Back_LP == false) {
-      // do short-press action: Shift+Alt+A
-      pressKeys(false, true, true, 'a');
-    }
-
-    // this was a long press
-    else {
-      active_Back_LP = false;
-    }
-  }
-
-
-  /* ----------------------------------------------------------------------------------------------
-     BUTTON: PLAY/PAUSE
-     ----------------------------------------------------------------------------------------------
-  */
-
-  // button pressed
-  if (digitalRead(button_PlayPause) == HIGH) {
-
-    // has not been pressed before => start timer
-    if (active_PlayPause == false) {
-      active_PlayPause = true;
-      timer_PlayPause = millis();
-    }
-
-    // this is a long press
-    if ((millis() - timer_PlayPause > longPressTime) && (active_PlayPause_LP == false)) {
-      active_PlayPause_LP = true;
-      // do long-press action: Shift+Alt+Q
-      pressKeys(false, true, true, 'q');
-    }
-  }
-
-  // button not pressed anymore
-  else if (active_PlayPause == true) {
-    active_PlayPause = false;
-
-    // this was a short press
-    if (active_PlayPause_LP == false) {
-      // do short-press action: Shift+Alt+S
-      pressKeys(false, true, true, 's');
-    }
-
-    // this was a long press
-    else {
-      active_PlayPause_LP = false;
-    }
-  }
-
-
-  /* ----------------------------------------------------------------------------------------------
-     BUTTON: FORWARD
-     ----------------------------------------------------------------------------------------------
-  */
-
-  // button pressed
-  if (digitalRead(button_Forward) == HIGH) {
-
-    // has not been pressed before => start timer
-    if (active_Forward == false) {
-      active_Forward = true;
-      timer_Forward = millis();
-    }
-
-    // this is a long press
-    if ((millis() - timer_Forward > longPressTime) && (active_Forward_LP == false)) {
-      active_Forward_LP = true;
-      // do long-press action: nothing
-    }
-  }
-
-  // button not pressed anymore
-  else if (active_Forward == true) {
-    active_Forward = false;
-
-    // this was a short press
-    if (active_Forward_LP == false) {
-      // do short-press action: Shift+Alt+D
-      pressKeys(false, true, true, 'd');
-    }
-
-    // this was a long press
-    else {
-      active_Forward_LP = false;
-    }
-  }
-
-
+  // check each button for short and long presses
+  btnPlayPause.check();
+  btnLoop.check();
+  btnBack.check();
+  btnCustom.check();
+  btnForward.check();
+  btnSpeed.check();
 }
