@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Online Video Looper Pedal
-// @version      0.1
+// @version      0.2
 // @description  handsfree looping in Youtube and Vimeo
 // @author       Andreas Brett
 // @match        *://*.youtube.com/*
@@ -223,7 +223,7 @@ function setLoopMarkers() {
         log("Set loop end");
 
         // start loop checking
-        ovlp_timer = setInterval(checkPlayState, 250);
+        ovlp_timer = setInterval(checkPlayState, 50);
     } else {
         // clear loop markers
         ovlp_loopStart = null;
