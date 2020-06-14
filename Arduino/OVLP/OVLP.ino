@@ -257,7 +257,7 @@ class Button {
 Button btnPlayPause;
 Button btnLoop;
 Button btnBack;
-Button btnCustom;
+Button btnFullscreen;
 Button btnForward;
 Button btnSpeed;
 
@@ -310,7 +310,7 @@ void setup() {
   btnPlayPause.init(8, 16, "Shift#Alt#S", "Shift#Alt#Q", "Ctrl#S", "Alt#S");
   btnLoop.init(6, 16, "Shift#Alt#W", "Shift#Alt#T", "Ctrl#W", "Alt#W");
   btnBack.init(7, 16, "Shift#Alt#A", "Shift#Alt#R", "Ctrl#A", "Alt#A");
-  btnCustom.init(10, 16, "Shift#Alt#F", "Shift#Alt#Z", "Ctrl#F", "Alt#F");
+  btnFullscreen.init(10, 16, "Shift#Alt#F", "Shift#Alt#Z", "Ctrl#F", "Alt#F");
   btnForward.init(9, 16, "Shift#Alt#D", "Shift#Alt#H", "Ctrl#D", "Alt#D");
   btnSpeed.init(5, 16, "Shift#Alt#E", "Shift#Alt#G", "Ctrl#E", "Alt#E");
 
@@ -328,7 +328,7 @@ void loop() {
   btnPlayPause.check();
   btnLoop.check();
   btnBack.check();
-  btnCustom.check();
+  btnFullscreen.check();
   btnForward.check();
   btnSpeed.check();
 }

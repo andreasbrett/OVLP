@@ -61,8 +61,8 @@ Use the toggle switch to switch between bank 1 and 2 enabling different keystrok
       - short press will jump back 5sec
 	  - long press will rewind the video
 	  - sends Shift+Alt+A (Shift+Alt+R for long press)
-   - footswitch **Custom**
-      - will do nothing
+   - footswitch **Fullscreen**
+      - will toggle between normal screen and full screen
 	  - sends Shift+Alt+F (Shift+Alt+Z for long press)
    - footswitch **Forward**
       - will jump forward 5sec
@@ -76,7 +76,7 @@ Use the toggle switch to switch between bank 1 and 2 enabling different keystrok
    - **Play / Pause** sends Ctrl+S (Alt+S for long press)
    - **Loop** sends Ctrl+W (Alt+W for long press)
    - **Back** sends Ctrl+A (Alt+A for long press)
-   - **Custom** sends Ctrl+F (Alt+F for long press)
+   - **Fullscreen** sends Ctrl+F (Alt+F for long press)
    - **Forward** sends Ctrl+D (Alt+D for long press)
    - **Speed** sends Ctrl+E (Alt+E for long press)
    - if you want to change them...

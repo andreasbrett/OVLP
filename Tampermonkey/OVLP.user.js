@@ -1,6 +1,6 @@
 // ==UserScript==
-// @name         Online Video Looper Pedal
-// @version      0.2
+// @name         OVLP
+// @version      0.3
 // @description  handsfree looping in Youtube and Vimeo
 // @author       Andreas Brett
 // @match        *://*.youtube.com/*
@@ -45,6 +45,10 @@ var button_Reset = {
 }
 var button_Rewind = {
     "key": "r",
+    "modifiers": "shift,alt"
+}
+var button_Fullscreen = {
+    "key": "f",
     "modifiers": "shift,alt"
 }
 
@@ -160,6 +164,12 @@ function handleKeyInput(k) {
         k.preventDefault();
         seekBegin();
     }
+
+    // button "Fullscreen"
+    else if (checkInput(k, button_Fullscreen)) {
+        k.preventDefault();
+        toggleFullscreen();
+    }
 }
 
 function seekBegin() {
@@ -199,6 +209,15 @@ function togglePlaybackRate() {
     // set playback rate
     ovlp_player.playbackRate = ovlp_speed;
     log("Playback rate = " + (ovlp_speed*100) + "%");
+}
+
+function toggleFullscreen() {
+    // toggle full screen or normal screen
+    if (ovlp_player.webkitDisplayingFullscreen) {
+        ovlp_player.webkitExitFullScreen();
+    } else {
+        ovlp_player.webkitEnterFullScreen();
+    }
 }
 
 function togglePlayPause() {
@@ -291,4 +310,5 @@ function createLogPane() {
     modifyButtonVar(button_PlayPause);
     modifyButtonVar(button_Reset);
     modifyButtonVar(button_Rewind);
+    modifyButtonVar(button_Fullscreen);
 })();
