@@ -323,8 +323,8 @@ function createLogPane() {
 function createProgressBar() {
     // calculate position
     var rect = ovlp_player.getBoundingClientRect();
-    var width = 50;
-    var height = 25;
+    var width = 100;
+    var height = 75;
     var left = rect.left + 5;
     var top = rect.top + 5;
 
@@ -332,7 +332,7 @@ function createProgressBar() {
     var logDiv = document.createElement("div");
     logDiv.id = "ovlp_progress";
     logDiv.innerHTML = "";
-    logDiv.style.cssText = "position: absolute; top: " + top + "px; left: " + left + "px; width: " + width + "px; height: " + height + "px; border-radius: 2px; margin: 0; padding: 0; background-color: #fff; font-weight: bold; font-size: " + (height*0.5) + "px; color: #333; text-align: center; line-height: " + height + "px; opacity: 0.8; display: none;";
+    logDiv.style.cssText = "position: absolute; top: " + top + "px; left: " + left + "px; width: " + width + "px; height: " + height + "px; border-radius: 5px; margin: 0; padding: 0; background-color: #fff; font-weight: bold; font-size: " + (height*0.5) + "px; color: #333; text-align: center; line-height: " + height + "px; opacity: 0.8; display: none;";
 
     // attach element to body
     document.getElementsByTagName("body")[0].appendChild(logDiv);
