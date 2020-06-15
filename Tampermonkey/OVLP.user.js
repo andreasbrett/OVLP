@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         OVLP
-// @version      0.3
+// @version      0.4
 // @description  handsfree looping in Youtube and Vimeo
 // @author       Andreas Brett
 // @match        *://*.youtube.com/*
@@ -62,6 +62,7 @@ var button_Fullscreen = {
 
 var ovlp_player = null;
 var ovlp_log = null;
+var ovlp_progress = null;
 var ovlp_timer = null;
 var ovlp_loopStart = null;
 var ovlp_loopEnd = null;
@@ -162,7 +163,7 @@ function handleKeyInput(k) {
     // button "Rewind"
     else if (checkInput(k, button_Rewind)) {
         k.preventDefault();
-        seekBegin();
+        seekRewind();
     }
 
     // button "Fullscreen"
@@ -172,21 +173,34 @@ function handleKeyInput(k) {
     }
 }
 
-function seekBegin() {
-    // seek back to beginning
-    ovlp_player.currentTime = 0;
-    log("Rewinding");
+function seekRewind() {
+    // seek back to beginning (of loop when in loop mode; of video otherwise)
+    if (ovlp_loopStart) {
+        log("Rewinding Loop Start");
+        ovlp_player.currentTime = ovlp_loopStart;
+    } else {
+        log("Rewinding");
+        ovlp_player.currentTime = 0;
+    }
 }
 
 function seekBack() {
-    // seek back 5sec
-    ovlp_player.currentTime -= 5;
+    // seek back 5sec (respecting loop)
+    if (ovlp_player.currentTime - 5 < ovlp_loopStart) {
+        ovlp_player.currentTime = ovlp_loopStart;
+    } else{
+        ovlp_player.currentTime -= 5;
+    }
     log("Rewinding 5sec");
 }
 
 function seekForward() {
-    // seek forward 5sec
-    ovlp_player.currentTime += 5;
+    // seek forward 5sec (respecting loop)
+    if (ovlp_player.currentTime + 5 > ovlp_loopEnd) {
+        ovlp_player.currentTime = ovlp_loopEnd;
+    } else{
+        ovlp_player.currentTime += 5;
+    }
     log("Forwarding 5sec");
 }
 
@@ -241,7 +255,11 @@ function setLoopMarkers() {
         ovlp_loopEnd = ovlp_player.currentTime;
         log("Set loop end");
 
+        // create progress bar at first call
+        if (ovlp_progress == null) createProgressBar();
+
         // start loop checking
+        ovlp_progress.style.display = "block";
         ovlp_timer = setInterval(checkPlayState, 50);
     } else {
         // clear loop markers
@@ -250,6 +268,7 @@ function setLoopMarkers() {
         log("Loop cleared");
 
         // stop loop checking
+        ovlp_progress.style.display = "none";
         clearInterval(ovlp_timer);
     }
 }
@@ -258,6 +277,7 @@ function clearSettings() {
     log("Settings cleared");
 
     // clear loop markers
+    ovlp_progress.style.display = "none";
     ovlp_loopStart = null;
     ovlp_loopEnd = null;
 
@@ -268,9 +288,14 @@ function clearSettings() {
 
 function checkPlayState() {
     if (ovlp_loopStart != null && ovlp_loopEnd != null) {
-        if (ovlp_player.currentTime >= ovlp_loopEnd) {
+        // rewind to loop start
+        if (ovlp_player.currentTime > ovlp_loopEnd) {
             ovlp_player.currentTime = ovlp_loopStart;
         }
+
+        // update progress bar
+        var progress = 100*(ovlp_player.currentTime - ovlp_loopStart)/(ovlp_loopEnd - ovlp_loopStart);
+        ovlp_progress.innerHTML = Math.floor(progress) + "%";
     }
 }
 
@@ -295,6 +320,26 @@ function createLogPane() {
     ovlp_log = document.getElementById("ovlp_log");
 }
 
+function createProgressBar() {
+    // calculate position
+    var rect = ovlp_player.getBoundingClientRect();
+    var width = 50;
+    var height = 25;
+    var left = rect.left + 5;
+    var top = rect.top + 5;
+
+    // create div element
+    var logDiv = document.createElement("div");
+    logDiv.id = "ovlp_progress";
+    logDiv.innerHTML = "";
+    logDiv.style.cssText = "position: absolute; top: " + top + "px; left: " + left + "px; width: " + width + "px; height: " + height + "px; border-radius: 2px; margin: 0; padding: 0; background-color: #fff; font-weight: bold; font-size: " + (height*0.5) + "px; color: #333; text-align: center; line-height: " + height + "px; opacity: 0.8; display: none;";
+
+    // attach element to body
+    document.getElementsByTagName("body")[0].appendChild(logDiv);
+
+    // store reference to log pane
+    ovlp_progress = document.getElementById("ovlp_progress");
+}
 
 (function() {
     'use strict';
