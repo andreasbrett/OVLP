@@ -296,6 +296,7 @@ function checkPlayState() {
         // update progress bar
         var progress = 100*(ovlp_player.currentTime - ovlp_loopStart)/(ovlp_loopEnd - ovlp_loopStart);
         ovlp_progress.innerHTML = Math.floor(progress) + "%";
+        ovlp_progress.style.backgroundSize = progress + "%";
     }
 }
 
@@ -329,13 +330,13 @@ function createProgressBar() {
     var top = rect.top + 5;
 
     // create div element
-    var logDiv = document.createElement("div");
-    logDiv.id = "ovlp_progress";
-    logDiv.innerHTML = "";
-    logDiv.style.cssText = "position: absolute; top: " + top + "px; left: " + left + "px; width: " + width + "px; height: " + height + "px; border-radius: 5px; margin: 0; padding: 0; background-color: #fff; font-weight: bold; font-size: " + (height*0.5) + "px; color: #333; text-align: center; line-height: " + height + "px; opacity: 0.8; display: none;";
+    var progressDiv = document.createElement("div");
+    progressDiv.id = "ovlp_progress";
+    progressDiv.innerHTML = "";
+    progressDiv.style.cssText = "position: absolute; top: " + top + "px; left: " + left + "px; width: " + width + "px; height: " + height + "px; border-radius: 5px; margin: 0; padding: 0; background-color: #fff; background-repeat: no-repeat; background-image: linear-gradient(90deg, rgb(51, 153, 102, 50) 0%, rgb(51, 153, 102, 50) 100%); background-size: 0%; font-weight: bold; font-size: " + (height*0.5) + "px; color: #333; text-align: center; line-height: " + height + "px; text-shadow: 0 0 8px #fff; opacity: 0.8; display: none;";
 
     // attach element to body
-    document.getElementsByTagName("body")[0].appendChild(logDiv);
+    document.getElementsByTagName("body")[0].appendChild(progressDiv);
 
     // store reference to log pane
     ovlp_progress = document.getElementById("ovlp_progress");
