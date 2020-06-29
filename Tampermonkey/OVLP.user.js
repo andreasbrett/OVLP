@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         OVLP
-// @version      0.4
+// @version      0.45
 // @description  handsfree looping in Youtube and Vimeo
 // @author       Andreas Brett
 // @match        *://*.youtube.com/*
@@ -186,7 +186,7 @@ function seekRewind() {
 
 function seekBack() {
     // seek back 5sec (respecting loop)
-    if (ovlp_player.currentTime - 5 < ovlp_loopStart) {
+    if (ovlp_loopStart && ovlp_player.currentTime - 5 < ovlp_loopStart) {
         ovlp_player.currentTime = ovlp_loopStart;
     } else{
         ovlp_player.currentTime -= 5;
@@ -196,7 +196,7 @@ function seekBack() {
 
 function seekForward() {
     // seek forward 5sec (respecting loop)
-    if (ovlp_player.currentTime + 5 > ovlp_loopEnd) {
+    if (ovlp_loopEnd && ovlp_player.currentTime + 5 > ovlp_loopEnd) {
         ovlp_player.currentTime = ovlp_loopEnd;
     } else{
         ovlp_player.currentTime += 5;
@@ -227,11 +227,7 @@ function togglePlaybackRate() {
 
 function toggleFullscreen() {
     // toggle full screen or normal screen
-    if (ovlp_player.webkitDisplayingFullscreen) {
-        ovlp_player.webkitExitFullScreen();
-    } else {
-        ovlp_player.webkitEnterFullScreen();
-    }
+    ovlp_player.webkitDisplayingFullscreen ? ovlp_player.webkitExitFullScreen() : ovlp_player.webkitEnterFullScreen();
 }
 
 function togglePlayPause() {
