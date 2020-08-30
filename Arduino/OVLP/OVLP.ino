@@ -346,12 +346,12 @@ void setup() {
    *  - "MIDI#127"
    */
   logMessage("Initializing buttons...");
-  btnPlayPause.init(8, 16, "Shift#Alt#S", "Shift#Alt#Q", "MIDI#5", "MIDI#55");
+  btnPlayPause.init(5, 16, "Shift#Alt#S", "Shift#Alt#Q", "MIDI#5", "MIDI#55");
   btnLoop.init(6, 16, "Shift#Alt#W", "Shift#Alt#T", "MIDI#2", "MIDI#22");
   btnBack.init(7, 16, "Shift#Alt#A", "Shift#Alt#R", "MIDI#4", "MIDI#44");
-  btnFullscreen.init(10, 16, "Shift#Alt#F", "Shift#Alt#Z", "MIDI#3", "MIDI#33");
+  btnFullscreen.init(8, 16, "Shift#Alt#F", "Shift#Alt#Z", "MIDI#3", "MIDI#33");
   btnForward.init(9, 16, "Shift#Alt#D", "Shift#Alt#H", "MIDI#6", "MIDI#66");
-  btnSpeed.init(5, 16, "Shift#Alt#E", "Shift#Alt#G", "MIDI#1", "MIDI#11");
+  btnSpeed.init(10, 16, "Shift#Alt#E", "Shift#Alt#G", "MIDI#1", "MIDI#11");
 
   logMessage("Initialization done. Running loop now.");
   logMessage("---------------------------------------------");
