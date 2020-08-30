@@ -40,12 +40,15 @@ This is a DIY clone of the [Vidami Pedal](https://utility.design) by Utility Des
  - mount the toggle switch
 
 ## Software Installation
- - load and flash [OVLP.ino](Arduino/OVLP/OVLP.ino) onto the Arduino using [Arduino IDE 1.6.7 or newer](https://www.arduino.cc/en/Main/Software)
+ - load and flash [OVLP.ino](Arduino/OVLP/OVLP.ino) onto the Arduino using [Arduino IDE 1.8.13 or newer](https://www.arduino.cc/en/Main/Software)
+	- install library [Keyboard](https://www.arduino.cc/reference/en/language/functions/usb/keyboard/) 1.0.2 or newer
+	- install library [MIDI Library](https://github.com/FortySevenEffects/arduino_midi_library) 5.0.2 or newer
+	- install library [USB-MIDI](https://github.com/lathoub/Arduino-USBMIDI) 1.1.2 or newer
  - install [Tampermonkey extension](https://www.tampermonkey.net/) in Chrome/Firefox/Edge/Opera/Safari
  - import [OVLP.user.js](Tampermonkey/OVLP.user.js) into Tampermonkey
 
 ## Usage
-Use the toggle switch to switch between bank 1 and 2 enabling different keystrokes that the pedal will send via USB to your computer.
+Use the toggle switch to switch between bank 1 and 2 enabling different keystrokes / MIDI messages that the pedal will send via USB to your computer.
 
  - bank 1 is for Youtube / Vimeo (and can be used for other applications that support custom keyboard shortcuts)
    - footswitch **Play / Pause**
@@ -72,13 +75,13 @@ Use the toggle switch to switch between bank 1 and 2 enabling different keystrok
 	  - sends Shift+Alt+S (Shift+Alt+Q for long press)
 
  - bank 2 is for any other application like your DAW
-   - it will simply send keystrokes that can be assigned in your DAW
-   - **Play / Pause** sends Ctrl+S (Alt+S for long press)
-   - **Loop** sends Ctrl+W (Alt+W for long press)
-   - **Back** sends Ctrl+A (Alt+A for long press)
-   - **Fullscreen** sends Ctrl+F (Alt+F for long press)
-   - **Forward** sends Ctrl+D (Alt+D for long press)
-   - **Speed** sends Ctrl+E (Alt+E for long press)
+   - it will send MIDI Program Change (PC) messages on channel 16 that can be assigned to useful functions in your DAW
+   - **Play / Pause** sends 5 (55 for long press)
+   - **Loop** sends 2 (22 for long press)
+   - **Back** sends 4 (44 for long press)
+   - **Fullscreen** sends 3 (33 for long press)
+   - **Forward** sends 6 (66 for long press)
+   - **Speed** sends 1 (11 for long press)
    - if you want to change them...
      - modify the [Arduino code](Arduino/OVLP/OVLP.ino) and upload it to the Arduino Micro
      - instructions where to modify the code are right at the top of that file
