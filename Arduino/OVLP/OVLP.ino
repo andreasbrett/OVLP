@@ -17,11 +17,12 @@
 
 
 /* ----------------------------------------------------------------------------------------------
- * include keyboard library
+ * include keyboard and MIDI library
  * ----------------------------------------------------------------------------------------------
  */
-#include "Keyboard.h"
-
+#include <Keyboard.h>
+#include <USB-MIDI.h>
+USBMIDI_CREATE_DEFAULT_INSTANCE();
 
 
 /* ----------------------------------------------------------------------------------------------
@@ -31,6 +32,7 @@
 unsigned long shortPressTime = 30;    // how long will a switch need to be pressed to be considered a short press? [in milliseconds]
 unsigned long longPressTime = 450;    // how long will a switch need to be pressed to be considered a long press? [in milliseconds]
 bool logMessages = false;             // show log messages via serial connection?
+int midiChannel = 16;                 // MIDI channel to use
 
 
 /* ----------------------------------------------------------------------------------------------
@@ -57,6 +59,7 @@ class KbdShortcut {
     bool ctrlKey = false;         // press Ctrl key?
     bool shiftKey = false;        // press Shift key?
     bool altKey = false;          // press Alt key?
+    int midiPC = -1;              // MIDI command
     char character = ' ';         // character to press
   
     int delay1 = 5;               // delay before pressing character
@@ -72,35 +75,50 @@ class KbdShortcut {
      */
     void init(String IN_shortcut) {
       shortcut = IN_shortcut;
-      
       String s = "";
       int pos1 = 0;
       int pos2 = -1;
-  
-      // go through each key in shortcut (delimiter: "#")
-      do {
-        pos2 = shortcut.indexOf("#", pos1);
-        if (pos2 == -1) {
-          pos2 = shortcut.length();
-        }
+      
+      // --------------------------------
+      // MIDI Program Change (PC) message
+      // --------------------------------
+      if (shortcut.startsWith("MIDI")) {
+        pos1 = shortcut.indexOf("#", 0) + 1;
+        pos2 = shortcut.length();
         s = shortcut.substring(pos1, pos2);
-        s.toLowerCase();
-        if (s == "ctrl") {
-          ctrlKey = true;
-        } else if (s == "shift") {
-          shiftKey = true;
-        } else if (s == "alt") {
-          altKey = true;
-        } else {
-          character = s.charAt(0);
+        midiPC = s.toInt();
+      }
+
+      // -----------------
+      // keyboard shortcut
+      // -----------------
+      else {
+
+        // go through each key in shortcut (delimiter: "#")
+        do {
+          pos2 = shortcut.indexOf("#", pos1);
+          if (pos2 == -1) {
+            pos2 = shortcut.length();
+          }
+          s = shortcut.substring(pos1, pos2);
+          s.toLowerCase();
+          if (s == "ctrl") {
+            ctrlKey = true;
+          } else if (s == "shift") {
+            shiftKey = true;
+          } else if (s == "alt") {
+            altKey = true;
+          } else {
+            character = s.charAt(0);
+          }
+          pos1 = pos2+1;
+        } while(pos1 <= shortcut.length());
+    
+        // remove delay1 and delay3 if no modifiers are set
+        if (ctrlKey == false && shiftKey == false && altKey == false) {
+          delay1 = 0;
+          delay3 = 0;
         }
-        pos1 = pos2+1;
-      } while(pos1 <= shortcut.length());
-  
-      // remove delay1 and delay3 if no modifiers are set
-      if (ctrlKey == false && shiftKey == false && altKey == false) {
-        delay1 = 0;
-        delay3 = 0;
       }
     }
 
@@ -118,35 +136,48 @@ class KbdShortcut {
      * ----------------------------------------------------------------------------------------------
      */
     void send() {
-      // check if character is set
-      if (character != ' ') {
-        // press Ctrl if necessary
-        if (ctrlKey) {
-          Keyboard.press(KEY_LEFT_CTRL);
+      // --------------------------------
+      // MIDI Program Change (PC) message
+      // --------------------------------
+      if (midiPC != -1) {
+        MIDI.sendProgramChange(midiPC, midiChannel);
+      }
+
+      // -----------------
+      // keyboard shortcut
+      // -----------------
+      else {
+      
+        // check if character is set
+        if (character != ' ') {
+          // press Ctrl if necessary
+          if (ctrlKey) {
+            Keyboard.press(KEY_LEFT_CTRL);
+          }
+    
+          // press Shift if necessary
+          if (shiftKey) {
+            Keyboard.press(KEY_LEFT_SHIFT);
+          }
+    
+          // press Alt if necessary
+          if (altKey) {
+            Keyboard.press(KEY_LEFT_ALT);
+          }
+    
+          // press character
+          delay(delay1);
+          Keyboard.press(character);
+    
+          // release character
+          delay(delay2);
+          Keyboard.release(character);
+    
+          // release modifiers
+          delay(delay3);
+          Keyboard.releaseAll();
+          delay(delay4);
         }
-  
-        // press Shift if necessary
-        if (shiftKey) {
-          Keyboard.press(KEY_LEFT_SHIFT);
-        }
-  
-        // press Alt if necessary
-        if (altKey) {
-          Keyboard.press(KEY_LEFT_ALT);
-        }
-  
-        // press character
-        delay(delay1);
-        Keyboard.press(character);
-  
-        // release character
-        delay(delay2);
-        Keyboard.release(character);
-  
-        // release modifiers
-        delay(delay3);
-        Keyboard.releaseAll();
-        delay(delay4);
       }
     }
 };
@@ -179,7 +210,7 @@ class Button {
     void init(int IN_pin_button, int IN_pin_bank, String IN_short1, String IN_long1, String IN_short2, String IN_long2) {
       // set pin mode
       pinMode(IN_pin_button, INPUT);
-	  pinMode(IN_pin_bank, INPUT);
+      pinMode(IN_pin_bank, INPUT);
 
       // define shortcuts
       shortcut1_short.init(IN_short1);
@@ -261,7 +292,6 @@ Button btnFullscreen;
 Button btnForward;
 Button btnSpeed;
 
-
 /* ----------------------------------------------------------------------------------------------
  * setup
  * ----------------------------------------------------------------------------------------------
@@ -278,7 +308,11 @@ void setup() {
   // start USB HID interface
   logMessage("Initializing USB HID interface...");
   Keyboard.begin();
-  
+
+  // start MIDI interface
+  logMessage("Initializing USB MIDI interface...");
+  MIDI.begin(midiChannel);
+
   /* ----------------------------------------------------------------------------------------------
    * define buttons (pins and shortcuts)
    * ----------------------------------------------------------------------------------------------
@@ -305,19 +339,23 @@ void setup() {
    *  - "Shift#Alt#" + KEY_F4
    *  - "Shift#Alt#" + KEY_TAB
    *  - "Shift#Alt#" + KEY_DOWN_ARROW
+   *  
+   * examples for MIDI Program Change (PC) commands:
+   *  - "MIDI#0"
+   *  - "MIDI#55"
+   *  - "MIDI#127"
    */
   logMessage("Initializing buttons...");
-  btnPlayPause.init(8, 16, "Shift#Alt#S", "Shift#Alt#Q", "Ctrl#S", "Alt#S");
-  btnLoop.init(6, 16, "Shift#Alt#W", "Shift#Alt#T", "Ctrl#W", "Alt#W");
-  btnBack.init(7, 16, "Shift#Alt#A", "Shift#Alt#R", "Ctrl#A", "Alt#A");
-  btnFullscreen.init(10, 16, "Shift#Alt#F", "Shift#Alt#Z", "Ctrl#F", "Alt#F");
-  btnForward.init(9, 16, "Shift#Alt#D", "Shift#Alt#H", "Ctrl#D", "Alt#D");
-  btnSpeed.init(5, 16, "Shift#Alt#E", "Shift#Alt#G", "Ctrl#E", "Alt#E");
+  btnPlayPause.init(8, 16, "Shift#Alt#S", "Shift#Alt#Q", "MIDI#5", "MIDI#55");
+  btnLoop.init(6, 16, "Shift#Alt#W", "Shift#Alt#T", "MIDI#2", "MIDI#22");
+  btnBack.init(7, 16, "Shift#Alt#A", "Shift#Alt#R", "MIDI#4", "MIDI#44");
+  btnFullscreen.init(10, 16, "Shift#Alt#F", "Shift#Alt#Z", "MIDI#3", "MIDI#33");
+  btnForward.init(9, 16, "Shift#Alt#D", "Shift#Alt#H", "MIDI#6", "MIDI#66");
+  btnSpeed.init(5, 16, "Shift#Alt#E", "Shift#Alt#G", "MIDI#1", "MIDI#11");
 
   logMessage("Initialization done. Running loop now.");
   logMessage("---------------------------------------------");
 }
-
 
 /* ----------------------------------------------------------------------------------------------
  * loop
