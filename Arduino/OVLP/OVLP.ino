@@ -32,7 +32,7 @@ USBMIDI_CREATE_DEFAULT_INSTANCE();
 unsigned long shortPressTime = 30;    // how long will a switch need to be pressed to be considered a short press? [in milliseconds]
 unsigned long longPressTime = 450;    // how long will a switch need to be pressed to be considered a long press? [in milliseconds]
 bool logMessages = false;             // show log messages via serial connection?
-int midiChannel = 16;                 // MIDI channel to use
+byte midiChannel = 16;                // MIDI channel to use
 
 
 /* ----------------------------------------------------------------------------------------------
@@ -59,13 +59,15 @@ class KbdShortcut {
     bool ctrlKey = false;         // press Ctrl key?
     bool shiftKey = false;        // press Shift key?
     bool altKey = false;          // press Alt key?
-    int midiPC = -1;              // MIDI command
+    byte midiType = 255;          // type of MIDI message (1 = Note / 2 = CC / 3 = PC)
+    byte midiNumber = 255;        // MIDI number to send
+    byte midiValue = 255;         // MIDI value to send
     char character = ' ';         // character to press
   
-    int delay1 = 5;               // delay before pressing character
-    int delay2 = 80;              // delay before releasing character
-    int delay3 = 40;              // delay before releasing modifiers
-    int delay4 = 100;             // delay after sending a shortcut
+    byte delay1 = 5;              // delay in msec before pressing character
+    byte delay2 = 80;             // delay in msec before releasing character
+    byte delay3 = 40;             // delay in msec before releasing modifiers
+    byte delay4 = 100;            // delay in msec after sending a shortcut
 
   
   public:
@@ -76,22 +78,52 @@ class KbdShortcut {
     void init(String IN_shortcut) {
       shortcut = IN_shortcut;
       String s = "";
-      int pos1 = 0;
-      int pos2 = -1;
+      char pos1 = 0;
+      char pos2 = -1;
       
-      // --------------------------------
-      // MIDI Program Change (PC) message
-      // --------------------------------
+      // ---------------------------------------------------------
+      // MIDI message (Note / CC / PC)
+      // ---------------------------------------------------------
       if (shortcut.startsWith("MIDI")) {
-        pos1 = shortcut.indexOf("#", 0) + 1;
-        pos2 = shortcut.length();
+        pos2 = shortcut.indexOf("#");
         s = shortcut.substring(pos1, pos2);
-        midiPC = s.toInt();
+        s.toLowerCase();
+        
+        // MIDI-PC
+        if (s == "midi-pc") {
+          midiType = 3;
+          pos1 = pos2+1;
+          pos2 = shortcut.indexOf("#", pos1);
+          s = shortcut.substring(pos1, pos2);
+          midiNumber = s.toInt();
+        } else {
+          // MIDI-Note
+          if (s == "midi-note") {
+            midiType = 1;
+          }
+          
+          // MIDI-CC
+          else if (s == "midi-cc") {
+            midiType = 2;
+          }
+          
+          // fetch note/command
+          pos1 = pos2+1;
+          pos2 = shortcut.indexOf("#", pos1);
+          s = shortcut.substring(pos1, pos2);
+          midiNumber = s.toInt();
+    
+          // fetch note/command value
+          pos1 = pos2+1;
+          pos2 = shortcut.indexOf("#", pos1);
+          s = shortcut.substring(pos1, pos2);
+          midiValue = s.toInt();
+        }
       }
 
-      // -----------------
+      // ---------------------------------------------------------
       // keyboard shortcut
-      // -----------------
+      // ---------------------------------------------------------
       else {
 
         // go through each key in shortcut (delimiter: "#")
@@ -136,16 +168,34 @@ class KbdShortcut {
      * ----------------------------------------------------------------------------------------------
      */
     void send() {
-      // --------------------------------
-      // MIDI Program Change (PC) message
-      // --------------------------------
-      if (midiPC != -1) {
-        MIDI.sendProgramChange(midiPC, midiChannel);
+      // ---------------------------------------------------------
+      // MIDI message (Note / CC / PC)
+      // ---------------------------------------------------------
+      if (midiType < 255) {
+        
+        // MIDI Note
+        if (midiType == 1) {
+          MIDI.sendNoteOn(midiNumber, midiValue, midiChannel);
+          delay(delay2);
+          MIDI.sendNoteOff(midiNumber, midiValue, midiChannel);
+        }
+        
+        // MIDI Control Change
+        else if (midiType == 2) {
+          MIDI.sendControlChange(midiNumber, midiValue, midiChannel);
+        }
+        
+        // MIDI Program Change
+        else if (midiType == 3) {
+          MIDI.sendProgramChange(midiNumber, midiChannel);  
+        }
+        
+        delay(delay4);
       }
 
-      // -----------------
+      // ---------------------------------------------------------
       // keyboard shortcut
-      // -----------------
+      // ---------------------------------------------------------
       else {
       
         // check if character is set
@@ -189,12 +239,12 @@ class KbdShortcut {
  */
 class Button {
   private:
-    int pin_button;                 // button's assigned pin
-    int pin_bank;                   // bank switch' assigned pin
-    int currentState = 0;           // button's current state
-    int previousState = 0;          // button's previous state
-    int startPressed = 0;           // point of time button has been pressed
-    int endPressed = 0;             // point of time button has been released
+    byte pin_button;                // button's assigned pin
+    byte pin_bank;                  // bank switch' assigned pin
+    byte currentState = 0;          // button's current state
+    byte previousState = 0;         // button's previous state
+    byte startPressed = 0;          // point of time button has been pressed
+    byte endPressed = 0;            // point of time button has been released
     unsigned long holdTime = 0;     // time button has been pressed for
     KbdShortcut shortcut1_short;    // keyboard shortcut for short press (bank #1)
     KbdShortcut shortcut1_long;     // keyboard shortcut for long press (bank #1)
@@ -340,18 +390,33 @@ void setup() {
    *  - "Shift#Alt#" + KEY_TAB
    *  - "Shift#Alt#" + KEY_DOWN_ARROW
    *  
-   * examples for MIDI Program Change (PC) commands:
-   *  - "MIDI#0"
-   *  - "MIDI#55"
-   *  - "MIDI#127"
+   * examples for MIDI Note commands 
+   * PARAM 1) note number: see https://newt.phys.unsw.edu.au/jw/notes.html
+   * PARAM 2) velocity: 0-127
+   *  - "MIDI-Note#0#127"
+   *  - "MIDI-Note#23#100"
+   *  - "MIDI-Note#127#43"
+   *  
+   * examples for MIDI Control Change (CC) commands
+   * PARAM 1) control number: 0-127 
+   * PARAM 2) control value: 0-127
+   *  - "MIDI-CC#0#127"
+   *  - "MIDI-CC#55#54"
+   *  - "MIDI-CC#127#3"
+   *  
+   * examples for MIDI Program Change (PC) commands
+   * PARAM 1) program number: 0-127
+   *  - "MIDI-PC#0"
+   *  - "MIDI-PC#55"
+   *  - "MIDI-PC#127"
    */
   logMessage("Initializing buttons...");
-  btnPlayPause.init(5, 16, "Shift#Alt#S", "Shift#Alt#Q", "MIDI#5", "MIDI#55");
-  btnLoop.init(6, 16, "Shift#Alt#W", "Shift#Alt#T", "MIDI#2", "MIDI#22");
-  btnBack.init(7, 16, "Shift#Alt#A", "Shift#Alt#R", "MIDI#4", "MIDI#44");
-  btnFullscreen.init(8, 16, "Shift#Alt#F", "Shift#Alt#Z", "MIDI#3", "MIDI#33");
-  btnForward.init(9, 16, "Shift#Alt#D", "Shift#Alt#H", "MIDI#6", "MIDI#66");
-  btnSpeed.init(10, 16, "Shift#Alt#E", "Shift#Alt#G", "MIDI#1", "MIDI#11");
+  btnPlayPause.init(5, 16, "Shift#Alt#S", "Shift#Alt#Q", "MIDI-PC#5", "MIDI-PC#55");
+  btnLoop.init(6, 16, "Shift#Alt#W", "Shift#Alt#T", "MIDI-PC#2", "MIDI-PC#22");
+  btnBack.init(7, 16, "Shift#Alt#A", "Shift#Alt#R", "MIDI-PC#4", "MIDI-PC#44");
+  btnFullscreen.init(8, 16, "Shift#Alt#F", "Shift#Alt#Z", "MIDI-PC#3", "MIDI-PC#33");
+  btnForward.init(9, 16, "Shift#Alt#D", "Shift#Alt#H", "MIDI-PC#6", "MIDI-PC#66");
+  btnSpeed.init(10, 16, "Shift#Alt#E", "Shift#Alt#G", "MIDI-PC#1", "MIDI-PC#11");
 
   logMessage("Initialization done. Running loop now.");
   logMessage("---------------------------------------------");
