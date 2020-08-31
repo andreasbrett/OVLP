@@ -245,8 +245,8 @@ class Button {
     byte pin_bank;                  // bank switch' assigned pin
     byte currentState = 0;          // button's current state
     byte previousState = 0;         // button's previous state
-    byte startPressed = 0;          // point of time button has been pressed
-    byte endPressed = 0;            // point of time button has been released
+    unsigned long startPressed = 0; // point of time button has been pressed
+    unsigned long endPressed = 0;   // point of time button has been released
     unsigned long holdTime = 0;     // time button has been pressed for
     KbdShortcut shortcut1_short;    // keyboard shortcut for short press (bank #1)
     KbdShortcut shortcut1_long;     // keyboard shortcut for long press (bank #1)
