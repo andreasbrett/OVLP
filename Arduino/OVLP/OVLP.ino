@@ -177,12 +177,14 @@ class KbdShortcut {
         if (midiType == 1) {
           MIDI.sendNoteOn(midiNumber, midiValue, midiChannel);
           delay(delay2);
-          MIDI.sendNoteOff(midiNumber, midiValue, midiChannel);
+          MIDI.sendNoteOff(midiNumber, 0, midiChannel);
         }
         
         // MIDI Control Change
         else if (midiType == 2) {
           MIDI.sendControlChange(midiNumber, midiValue, midiChannel);
+          delay(delay2);
+          MIDI.sendControlChange(midiNumber, 0, midiChannel);
         }
         
         // MIDI Program Change
