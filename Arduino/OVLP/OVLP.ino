@@ -326,7 +326,7 @@ class Button {
                 shortcut1_short.send();
               } else {
                 logMessage(" - bank = 2");
-                logMessage(" - type = long");
+                logMessage(" - type = short");
                 logMessage(" - sending ", false);
                 logMessage(shortcut2_short.getShortcut());  
                 shortcut2_short.send();
@@ -337,7 +337,7 @@ class Button {
           if (holdTime >= longPressTime) {
               if (digitalRead(pin_bank) == LOW) {
                 logMessage(" - bank = 1");
-                logMessage(" - type = short");
+                logMessage(" - type = long");
                 logMessage(" - sending ", false);
                 logMessage(shortcut1_long.getShortcut());
                 shortcut1_long.send();
