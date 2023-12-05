@@ -300,20 +300,34 @@ class Button {
       // button pressed
       if (currentState == HIGH) {
           startPressed = millis();
+          logMessage("");
+          logMessage("Button press detected...");
     
       // button released
       } else {
           endPressed = millis();
           holdTime = endPressed - startPressed;
+          logMessage(" - hold time = ", false);
+          logMessage(String(holdTime), false);
+          logMessage("ms");
+
+          // bounced
+          if (holdTime < shortPressTime) {
+              logMessage(" -> bounced. ignoring.");
+          }
     
           // short-press
           if (holdTime >= shortPressTime && holdTime < longPressTime) {
               if (digitalRead(pin_bank) == LOW) {
-                logMessage("Button short-pressed (Bank #1). Sending keystrokes: ", false);
+                logMessage(" - bank = 1");
+                logMessage(" - type = short");
+                logMessage(" - sending ", false);
                 logMessage(shortcut1_short.getShortcut());
                 shortcut1_short.send();
               } else {
-                logMessage("Button short-pressed (Bank #2). Sending keystrokes: ", false);
+                logMessage(" - bank = 2");
+                logMessage(" - type = long");
+                logMessage(" - sending ", false);
                 logMessage(shortcut2_short.getShortcut());  
                 shortcut2_short.send();
               }
@@ -322,11 +336,15 @@ class Button {
           // long-press
           if (holdTime >= longPressTime) {
               if (digitalRead(pin_bank) == LOW) {
-                logMessage("Button long-pressed (Bank #1). Sending keystrokes: ", false);
+                logMessage(" - bank = 1");
+                logMessage(" - type = short");
+                logMessage(" - sending ", false);
                 logMessage(shortcut1_long.getShortcut());
                 shortcut1_long.send();
               } else {
-                logMessage("Button long-pressed (Bank #2). Sending keystrokes: ", false);
+                logMessage(" - bank = 2");
+                logMessage(" - type = long");
+                logMessage(" - sending ", false);
                 logMessage(shortcut2_long.getShortcut());
                 shortcut2_long.send();
               }
