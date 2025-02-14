@@ -35,7 +35,7 @@ This is a DIY clone of the [Vidami Pedal](https://utility.design) by Utility Des
  - drill 6 holes for the footswitches
  - drill 1 hole for the toggle switch
  - drill a hole for the USB cable
- - mount the Arduino Micro so it won't move (e.g. a [small breadboard](https://www.taydaelectronics.com/catalogsearch/result/?q=170+point+breadboard))
+ - mount the Arduino Micro so it won't move (e.g. a [small breadboard](https://www.taydaelectronics.com/catalogsearch/result/?q=170+point+breadboard) with adhesive backing)
  - mount the footswitches
  - mount the toggle switch
 
